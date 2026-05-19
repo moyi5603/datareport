@@ -1,13 +1,11 @@
-# date-report
+# datareport
 
 销售数据交互报表（静态页面）。
 
 ## 在线访问
 
-部署完成后访问：
-
-- 首页：<https://moyi5603.github.io/date-report/>
-- 报表：<https://moyi5603.github.io/date-report/data-report.html>
+- 首页：<https://moyi5603.github.io/datareport/>
+- 报表：<https://moyi5603.github.io/datareport/data-report.html>
 
 ## 本地预览
 
