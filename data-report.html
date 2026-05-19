@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据报表</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f8fafc;
+      --color-background-tertiary: #f1f5f9;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3b8;
+      --color-border-tertiary: rgba(148, 163, 184, 0.15);
+      --color-border-secondary: rgba(148, 163, 184, 0.3);
+      --color-border-primary: rgba(148, 163, 184, 0.4);
+      --color-info: #3b82f6;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --border-radius-md: 8px;
+      --border-radius-lg: 10px;
+      --border-radius-xl: 12px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-background-secondary);
+      color: var(--color-text-primary);
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      background: var(--color-background-primary);
+      border-radius: var(--border-radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .page-title svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-info);
+    }
+
+    .filter-section {
+      background: var(--color-background-primary);
+      border-radius: var(--border-radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .filter-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 16px;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    .filter-input {
+      height: 36px;
+      padding: 0 12px;
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-md);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background: var(--color-background-primary);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      min-width: 200px;
+    }
+
+    .filter-input:focus {
+      border-color: var(--color-info);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .filter-input::placeholder {
+      color: var(--color-text-tertiary);
+    }
+
+    .date-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-input {
+      width: 140px;
+    }
+
+    .date-separator {
+      color: var(--color-text-tertiary);
+      font-size: 14px;
+    }
+
+    .btn {
+      height: 36px;
+      padding: 0 16px;
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: var(--border-radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--color-info);
+      color: white;
+      border-color: var(--color-info);
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .btn-secondary {
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-background-tertiary);
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .table-section {
+      background: var(--color-background-primary);
+      border-radius: var(--border-radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .section-subtitle {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      margin-top: 2px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: var(--color-background-tertiary);
+    }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+    }
+
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th.sortable:hover {
+      color: var(--color-text-primary);
+    }
+
+    th .sort-icon {
+      margin-left: 4px;
+      opacity: 0.5;
+    }
+
+    th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--color-info);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+      color: var(--color-text-primary);
+    }
+
+    tbody tr {
+      transition: background-color 0.15s;
+    }
+
+    tbody tr:hover {
+      background: var(--color-background-secondary);
+    }
+
+    tbody tr.selected {
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    tbody tr.clickable {
+      cursor: pointer;
+    }
+
+    tbody tr.clickable:hover {
+      background: rgba(59, 130, 246, 0.12);
+    }
+
+    .app-name {
+      color: var(--color-info);
+      font-weight: 500;
+    }
+
+    .app-name:hover {
+      text-decoration: underline;
+    }
+
+    .percentage {
+      font-weight: 500;
+    }
+
+    .percentage.positive {
+      color: #10b981;
+    }
+
+    .percentage.negative {
+      color: #ef4444;
+    }
+
+    .percentage.muted {
+      color: var(--color-text-tertiary);
+    }
+
+    .currency {
+      font-weight: 500;
+    }
+
+    .tooltip {
+      position: relative;
+      cursor: help;
+    }
+
+    .tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-text-primary);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 100;
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .checkbox-cell {
+      width: 40px;
+      text-align: center;
+    }
+
+    .checkbox {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--color-info);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .badge-info {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--color-info);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--color-text-tertiary);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .export-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--color-background-tertiary);
+      border-radius: var(--border-radius-md);
+      margin-bottom: 12px;
+    }
+
+    .export-info {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .export-info strong {
+      color: var(--color-info);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 20px;
+      background: var(--color-text-primary);
+      color: white;
+      border-radius: var(--border-radius-lg);
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.error {
+      background: var(--color-danger);
+    }
+
+    .toast.success {
+      background: var(--color-success);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .pagination-info {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      border: 0.5px solid var(--color-border-tertiary);
+      background: var(--color-background-primary);
+      border-radius: var(--border-radius-md);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--color-info);
+      color: var(--color-info);
+    }
+
+    .page-btn.active {
+      background: var(--color-info);
+      border-color: var(--color-info);
+      color: white;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .page-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background: var(--color-background-primary);
+      border-radius: var(--border-radius-md);
+      padding: 16px;
+      border: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .metric-change {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .color-bar {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      margin-right: 8px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-input {
+        min-width: 100%;
+      }
+
+      .date-range {
+        flex-wrap: wrap;
+      }
+
+      .date-input {
+        width: 100%;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .export-bar {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <div class="page-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18"/>
+          <path d="M18 17V9"/>
+          <path d="M13 17V5"/>
+          <path d="M8 17v-3"/>
+        </svg>
+        销售数据报表
+      </div>
+    </div>
+
+    <!-- 筛选区域 -->
+    <div class="filter-section">
+      <div class="filter-title">筛选条件</div>
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">租户名称</label>
+          <input type="text" class="filter-input" id="tenantInput" placeholder="输入租户名称，支持模糊查询">
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">时间范围</label>
+          <div class="date-range">
+            <input type="date" class="filter-input date-input" id="startDate" value="2025-01-01">
+            <span class="date-separator">至</span>
+            <input type="date" class="filter-input date-input" id="endDate" value="2025-01-31">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="handleSearch()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          查询
+        </button>
+        <button class="btn btn-secondary" onclick="handleReset()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          重置
+        </button>
+      </div>
+    </div>
+
+    <!-- 指标卡片 -->
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-label">总销售额</div>
+        <div class="metric-value" id="totalSales">¥2,856,320</div>
+        <div class="metric-change percentage positive">较上期 +15.8%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">订单总量</div>
+        <div class="metric-value" id="totalOrders">12,847</div>
+        <div class="metric-change percentage positive">较上期 +8.2%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">平均毛利率</div>
+        <div class="metric-value" id="avgProfitRate">28.5%</div>
+        <div class="metric-change percentage negative">较上期 -2.1%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">平均客单价</div>
+        <div class="metric-value" id="avgOrderValue">¥222.3</div>
+        <div class="metric-change percentage positive">较上期 +6.9%</div>
+      </div>
+    </div>
+
+    <!-- 主表 -->
+    <div class="table-section">
+      <div class="section-header">
+        <div>
+          <div class="section-title">应用销售数据</div>
+          <div class="section-subtitle">点击应用名称查看明细数据</div>
+        </div>
+      </div>
+
+      <div class="export-bar" id="exportBar" style="display: none;">
+        <div class="export-info">
+          已选择 <strong id="selectedCount">0</strong> 个应用，商品数据共计 <strong id="totalProducts">0</strong> 条
+        </div>
+        <button class="btn btn-primary" onclick="handleExport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          导出数据
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th class="checkbox-cell">
+                <input type="checkbox" class="checkbox" id="selectAll" onchange="toggleSelectAll()">
+              </th>
+              <th class="sortable sorted">应用名称 <span class="sort-icon">↓</span></th>
+              <th class="sortable">销售额 <span class="sort-icon">↓</span></th>
+              <th class="sortable">同比 <span class="sort-icon">↓</span></th>
+              <th class="sortable">环比 <span class="sort-icon">↓</span></th>
+              <th class="sortable">占比 <span class="sort-icon">↓</span></th>
+              <th class="sortable">成本 <span class="sort-icon">↓</span></th>
+              <th class="sortable">毛利率 <span class="sort-icon">↓</span></th>
+              <th class="sortable">客单价 <span class="sort-icon">↓</span></th>
+              <th class="sortable">日均销售额 <span class="sort-icon">↓</span></th>
+            </tr>
+          </thead>
+          <tbody id="mainTableBody">
+            <tr class="clickable selected" onclick="selectApp(this, '自营')" data-app="自营">
+              <td class="checkbox-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="checkbox" checked onchange="updateExportBar()">
+              </td>
+              <td><span class="app-name">自营</span> <span class="badge badge-info">已选中</span></td>
+              <td class="currency">¥856,320</td>
+              <td class="percentage positive">+18.5%</td>
+              <td class="percentage positive">+8.3%</td>
+              <td class="percentage">29.98%</td>
+              <td class="currency">¥598,424</td>
+              <td class="percentage positive">30.12%</td>
+              <td class="currency">¥245.6</td>
+              <td class="currency">¥27,623</td>
+            </tr>
+            <tr class="clickable" onclick="selectApp(this, '盒马鲜生')" data-app="盒马鲜生">
+              <td class="checkbox-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="checkbox" onchange="updateExportBar()">
+              </td>
+              <td><span class="app-name">盒马鲜生</span></td>
+              <td class="currency">¥523,180</td>
+              <td class="percentage positive">+12.3%</td>
+              <td class="percentage positive">+5.6%</td>
+              <td class="percentage">18.32%</td>
+              <td class="currency">¥355,762</td>
+              <td class="percentage positive">32.01%</td>
+              <td class="currency">¥312.8</td>
+              <td class="currency">¥16,877</td>
+            </tr>
+            <tr class="clickable" onclick="selectApp(this, '物美')" data-app="物美">
+              <td class="checkbox-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="checkbox" onchange="updateExportBar()">
+              </td>
+              <td><span class="app-name">物美</span></td>
+              <td class="currency">¥412,560</td>
+              <td class="percentage positive">+25.8%</td>
+              <td class="percentage positive">+15.2%</td>
+              <td class="percentage">14.44%</td>
+              <td class="currency">¥289,192</td>
+              <td class="percentage positive">29.89%</td>
+              <td class="currency">¥168.4</td>
+              <td class="currency">¥13,308</td>
+            </tr>
+            <tr class="clickable" onclick="selectApp(this, '肯德基')" data-app="肯德基">
+              <td class="checkbox-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="checkbox" onchange="updateExportBar()">
+              </td>
+              <td><span class="app-name">肯德基</span></td>
+              <td class="currency">¥356,890</td>
+              <td class="percentage negative">-5.2%</td>
+              <td class="percentage positive">+2.1%</td>
+              <td class="percentage">12.49%</td>
+              <td class="currency">¥261,052</td>
+              <td class="percentage positive">26.85%</td>
+              <td class="currency">¥142.3</td>
+              <td class="currency">¥11,512</td>
+            </tr>
+            <tr class="clickable" onclick="selectApp(this, '麦当劳')" data-app="麦当劳">
+              <td class="checkbox-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="checkbox" onchange="updateExportBar()">
+              </td>
+              <td><span class="app-name">麦当劳</span></td>
+              <td class="currency">¥298,450</td>
+              <td class="percentage positive">+32.1%</td>
+              <td class="percentage positive">+18.7%</td>
+              <td class="percentage">10.45%</td>
+              <td class="currency">¥198,229</td>
+              <td class="percentage positive">33.58%</td>
+              <td class="currency">¥425.6</td>
+              <td class="currency">¥9,627</td>
+            </tr>
+            <tr class="clickable" onclick="selectApp(this, '大润发')" data-app="大润发">
+              <td class="checkbox-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="checkbox" onchange="updateExportBar()">
+              </td>
+              <td><span class="app-name">大润发</span></td>
+              <td class="currency">¥408,920</td>
+              <td class="percentage positive">+22.5%</td>
+              <td class="percentage positive">+11.3%</td>
+              <td class="percentage">14.32%</td>
+              <td class="currency">¥279,692</td>
+              <td class="percentage positive">31.61%</td>
+              <td class="currency">¥568.2</td>
+              <td class="currency">¥13,191</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination-info">共 6 条数据</div>
+        <div class="pagination-controls">
+          <button class="page-btn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 明细表 -->
+    <div class="table-section" id="detailSection">
+      <div class="section-header">
+        <div>
+          <div class="section-title">商品明细数据</div>
+          <div class="section-subtitle" id="detailSubtitle">当前展示：自营</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>商品名称</th>
+              <th class="sortable">单品数量 <span class="sort-icon">↓</span></th>
+              <th class="sortable">商品单价 <span class="sort-icon">↓</span></th>
+              <th class="sortable">商品总售价 <span class="sort-icon">↓</span></th>
+              <th class="sortable">毛利率 <span class="sort-icon">↓</span></th>
+              <th class="sortable">占比 <span class="sort-icon">↓</span></th>
+            </tr>
+          </thead>
+          <tbody id="detailTableBody">
+            <tr>
+              <td>1</td>
+              <td>澳洲进口牛排 200g <span class="badge badge-info">价格调整</span></td>
+              <td>1,256</td>
+              <td class="currency">¥89.9</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥112,914 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">28.5%</td>
+              <td class="percentage">13.19%</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>智利车厘子 JJ级 500g</td>
+              <td>2,105</td>
+              <td class="currency">¥49.9</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥105,040 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">32.1%</td>
+              <td class="percentage">12.27%</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>日式三文鱼刺身 100g</td>
+              <td>1,892</td>
+              <td class="currency">¥58.0</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥109,736 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">25.8%</td>
+              <td class="percentage">12.81%</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>有机西兰花 400g</td>
+              <td>3,456</td>
+              <td class="currency">¥12.8</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥44,237 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">35.2%</td>
+              <td class="percentage">5.17%</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>鲜活大闸蟹 公母对装 4只</td>
+              <td>856</td>
+              <td class="currency">¥128.0</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥109,568 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">22.5%</td>
+              <td class="percentage">12.80%</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>进口蓝莓 125g × 4盒装</td>
+              <td>1,324</td>
+              <td class="currency">¥68.0</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥90,032 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">38.5%</td>
+              <td class="percentage">10.52%</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>内蒙古草原羊肉卷 500g</td>
+              <td>978</td>
+              <td class="currency">¥72.5</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥70,905 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">29.8%</td>
+              <td class="percentage">8.28%</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>日本静冈蜜瓜 1个</td>
+              <td>542</td>
+              <td class="currency">¥168.0</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥91,056 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">41.2%</td>
+              <td class="percentage">10.63%</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>法式拿破仑蛋糕 6寸</td>
+              <td>678</td>
+              <td class="currency">¥88.0</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥59,664 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">45.3%</td>
+              <td class="percentage">6.97%</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>挪威三文鱼排 300g</td>
+              <td>1,156</td>
+              <td class="currency">¥78.5</td>
+              <td class="currency tooltip" data-tip="售价不含运费、包装费">¥90,746 <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+              <td class="percentage positive">26.8%</td>
+              <td class="percentage">10.60%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination-info">共 10 条数据</div>
+        <div class="pagination-controls">
+          <button class="page-btn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // 选中状态管理
+    let selectedApp = '自营';
+    let selectedApps = ['自营'];
+
+    // 应用数据映射
+    const appData = {
+      '自营': {
+        name: '自营',
+        sales: '¥856,320',
+        yoy: '+18.5%',
+        qoq: '+8.3%',
+        share: '29.98%',
+        cost: '¥598,424',
+        profitRate: '30.12%',
+        avgOrderValue: '¥245.6',
+        dailySales: '¥27,623',
+        products: 156,
+        topProducts: [
+          { name: '澳洲进口牛排 200g', count: 1256, price: 89.9, total: 112914, profitRate: 28.5, share: 13.19 },
+          { name: '智利车厘子 JJ级 500g', count: 2105, price: 49.9, total: 105040, profitRate: 32.1, share: 12.27 },
+          { name: '日式三文鱼刺身 100g', count: 1892, price: 58.0, total: 109736, profitRate: 25.8, share: 12.81 },
+          { name: '有机西兰花 400g', count: 3456, price: 12.8, total: 44237, profitRate: 35.2, share: 5.17 },
+          { name: '鲜活大闸蟹 公母对装 4只', count: 856, price: 128.0, total: 109568, profitRate: 22.5, share: 12.80 },
+          { name: '进口蓝莓 125g × 4盒装', count: 1324, price: 68.0, total: 90032, profitRate: 38.5, share: 10.52 },
+          { name: '内蒙古草原羊肉卷 500g', count: 978, price: 72.5, total: 70905, profitRate: 29.8, share: 8.28 },
+          { name: '日本静冈蜜瓜 1个', count: 542, price: 168.0, total: 91056, profitRate: 41.2, share: 10.63 },
+          { name: '法式拿破仑蛋糕 6寸', count: 678, price: 88.0, total: 59664, profitRate: 45.3, share: 6.97 },
+          { name: '挪威三文鱼排 300g', count: 1156, price: 78.5, total: 90746, profitRate: 26.8, share: 10.60 }
+        ]
+      },
+      '盒马鲜生': {
+        name: '盒马鲜生',
+        sales: '¥523,180',
+        yoy: '+12.3%',
+        qoq: '+5.6%',
+        share: '18.32%',
+        cost: '¥355,762',
+        profitRate: '32.01%',
+        avgOrderValue: '¥312.8',
+        dailySales: '¥16,877',
+        products: 98,
+        topProducts: [
+          { name: '日本A5和牛西冷 200g', count: 856, price: 298.0, total: 255088, profitRate: 28.5, share: 48.76 },
+          { name: '法国依云矿泉水整箱 24瓶', count: 1245, price: 168.0, total: 209160, profitRate: 35.2, share: 39.96 },
+          { name: '有机燕麦片 1kg', count: 2341, price: 45.0, total: 105345, profitRate: 42.1, share: 20.13 },
+          { name: '澳洲进口龙虾 1只 500g', count: 312, price: 398.0, total: 124176, profitRate: 22.8, share: 23.73 },
+          { name: '西班牙火腿切片 100g', count: 567, price: 128.0, total: 72576, profitRate: 38.5, share: 13.87 },
+          { name: '意大利黑醋 500ml', count: 423, price: 88.0, total: 37224, profitRate: 52.3, share: 7.11 },
+          { name: '瑞士莲巧克力礼盒', count: 289, price: 198.0, total: 57222, profitRate: 45.8, share: 10.93 },
+          { name: '希腊酸奶 400g × 4', count: 1567, price: 56.0, total: 87752, profitRate: 38.9, share: 16.77 },
+          { name: '加拿大北极贝 200g', count: 445, price: 168.0, total: 74760, profitRate: 29.2, share: 14.29 },
+          { name: '土耳其无花果干 300g', count: 678, price: 78.0, total: 52884, profitRate: 48.5, share: 10.10 }
+        ]
+      },
+      '物美': {
+        name: '物美',
+        sales: '¥412,560',
+        yoy: '+25.8%',
+        qoq: '+15.2%',
+        share: '14.44%',
+        cost: '¥289,192',
+        profitRate: '29.89%',
+        avgOrderValue: '¥168.4',
+        dailySales: '¥13,308',
+        products: 234,
+        topProducts: [
+          { name: '新鲜鸡蛋 30枚装', count: 4567, price: 28.8, total: 131530, profitRate: 18.5, share: 31.88 },
+          { name: '鲜牛奶 1L', count: 3456, price: 15.9, total: 54950, profitRate: 22.3, share: 13.32 },
+          { name: '香蕉 约500g', count: 5234, price: 6.8, total: 35591, profitRate: 35.8, share: 8.63 },
+          { name: '胡萝卜 约400g', count: 2890, price: 4.5, total: 13005, profitRate: 42.5, share: 3.15 },
+          { name: '鸡胸肉 300g', count: 1890, price: 18.8, total: 35532, profitRate: 28.9, share: 8.61 },
+          { name: '小葱 约200g', count: 6789, price: 3.2, total: 21725, profitRate: 55.2, share: 5.27 },
+          { name: '西红柿 约500g', count: 2345, price: 8.9, total: 20871, profitRate: 38.5, share: 5.06 },
+          { name: '大米 5kg', count: 567, price: 45.0, total: 25515, profitRate: 15.8, share: 6.19 },
+          { name: '猪肉馅 300g', count: 1234, price: 22.8, total: 28135, profitRate: 25.6, share: 6.82 },
+          { name: '青椒 约300g', count: 1789, price: 7.8, total: 13954, profitRate: 48.2, share: 3.38 }
+        ]
+      },
+      '肯德基': {
+        name: '肯德基',
+        sales: '¥356,890',
+        yoy: '-5.2%',
+        qoq: '+2.1%',
+        share: '12.49%',
+        cost: '¥261,052',
+        profitRate: '26.85%',
+        avgOrderValue: '¥142.3',
+        dailySales: '¥11,512',
+        products: 312,
+        topProducts: [
+          { name: '吮指原味鸡 1块装', count: 3456, price: 18.9, total: 65318, profitRate: 58.5, share: 18.30 },
+          { name: '香辣鸡腿堡 单人餐', count: 2345, price: 25.8, total: 60501, profitRate: 62.8, share: 16.96 },
+          { name: '薯条中杯', count: 4567, price: 12.0, total: 54804, profitRate: 65.2, share: 15.36 },
+          { name: '可乐中杯', count: 5234, price: 10.0, total: 52340, profitRate: 72.5, share: 14.67 },
+          { name: '葡式蛋挞 1个', count: 3456, price: 8.5, total: 29376, profitRate: 55.8, share: 8.23 },
+          { name: '黄金鸡块 5块装', count: 2345, price: 19.9, total: 46665, profitRate: 60.2, share: 13.08 },
+          { name: '鸡米花 小份', count: 1890, price: 16.0, total: 30240, profitRate: 58.9, share: 8.47 },
+          { name: '上校鸡块 10块装', count: 678, price: 35.0, total: 23730, profitRate: 62.5, share: 6.65 },
+          { name: '土豆泥 小份', count: 3456, price: 9.0, total: 31104, profitRate: 68.2, share: 8.72 },
+          { name: '玉米棒 1根', count: 1789, price: 8.0, total: 14312, profitRate: 72.8, share: 4.01 }
+        ]
+      },
+      '麦当劳': {
+        name: '麦当劳',
+        sales: '¥298,450',
+        yoy: '+32.1%',
+        qoq: '+18.7%',
+        share: '10.45%',
+        cost: '¥198,229',
+        profitRate: '33.58%',
+        avgOrderValue: '¥425.6',
+        dailySales: '¥9,627',
+        products: 567,
+        topProducts: [
+          { name: '巨无霸套餐', count: 2345, price: 38.0, total: 89110, profitRate: 52.5, share: 29.86 },
+          { name: '麦辣鸡腿堡', count: 1892, price: 22.5, total: 42570, profitRate: 58.2, share: 14.27 },
+          { name: '麦香鱼套餐', count: 1234, price: 32.0, total: 39488, profitRate: 55.8, share: 13.23 },
+          { name: '薯条大杯', count: 3456, price: 12.0, total: 41472, profitRate: 68.5, share: 13.90 },
+          { name: '可乐大杯', count: 4567, price: 10.0, total: 45670, profitRate: 75.2, share: 15.30 },
+          { name: '苹果派 1个', count: 1567, price: 8.5, total: 13320, profitRate: 52.8, share: 4.46 },
+          { name: '麦旋风 奥利奥', count: 1234, price: 15.0, total: 18510, profitRate: 48.5, share: 6.20 },
+          { name: '板烧鸡腿堡', count: 890, price: 24.5, total: 21805, profitRate: 56.2, share: 7.31 },
+          { name: '麦乐鸡 10块', count: 567, price: 19.5, total: 11057, profitRate: 62.8, share: 3.70 },
+          { name: '那么大鸡排 1份', count: 423, price: 18.0, total: 7614, profitRate: 55.2, share: 2.55 }
+        ]
+      },
+      '大润发': {
+        name: '大润发',
+        sales: '¥408,920',
+        yoy: '+22.5%',
+        qoq: '+11.3%',
+        share: '14.32%',
+        cost: '¥279,692',
+        profitRate: '31.61%',
+        avgOrderValue: '¥568.2',
+        dailySales: '¥13,191',
+        products: 445,
+        topProducts: [
+          { name: '飞天茅台 53度 500ml', count: 23, price: 1499.0, total: 34477, profitRate: 12.5, share: 8.43 },
+          { name: '五常大米 5kg', count: 234, price: 68.0, total: 15912, profitRate: 18.8, share: 3.89 },
+          { name: '金龙鱼调和油 5L', count: 456, price: 78.0, total: 35568, profitRate: 15.2, share: 8.70 },
+          { name: '伊利纯牛奶 250ml×24', count: 1234, price: 58.0, total: 71572, profitRate: 22.5, share: 17.50 },
+          { name: '农夫山泉 550ml×24', count: 1567, price: 28.0, total: 43876, profitRate: 28.9, share: 10.73 },
+          { name: '蒙牛酸奶 100g×10', count: 678, price: 18.8, total: 12746, profitRate: 35.2, share: 3.12 },
+          { name: '思念水饺 500g', count: 345, price: 15.8, total: 5451, profitRate: 28.5, share: 1.33 },
+          { name: '双汇王中王 30g×10', count: 567, price: 22.0, total: 12474, profitRate: 25.8, share: 3.05 },
+          { name: '维达纸巾 130抽×3', count: 890, price: 19.9, total: 17711, profitRate: 32.5, share: 4.33 },
+          { name: '汰渍洗衣液 3kg', count: 234, price: 45.0, total: 10530, profitRate: 28.2, share: 2.57 }
+        ]
+      }
+    };
+
+    // 选中应用
+    function selectApp(row, appName) {
+      // 移除其他行的选中状态
+      document.querySelectorAll('#mainTableBody tr').forEach(tr => {
+        tr.classList.remove('selected');
+        const badge = tr.querySelector('.badge-info');
+        if (badge) badge.remove();
+      });
+
+      // 添加选中状态
+      row.classList.add('selected');
+      const appNameCell = row.querySelector('td:first-child + td');
+      const badge = document.createElement('span');
+      badge.className = 'badge badge-info';
+      badge.textContent = '已选中';
+      appNameCell.appendChild(badge);
+
+      selectedApp = appName;
+      updateDetailTable(appName);
+    }
+
+    // 更新明细表
+    function updateDetailTable(appName) {
+      const data = appData[appName];
+      if (!data) return;
+
+      document.getElementById('detailSubtitle').textContent = `当前展示：${appName}`;
+
+      const tbody = document.getElementById('detailTableBody');
+      tbody.innerHTML = data.topProducts.map((product, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${product.name}</td>
+          <td>${product.count.toLocaleString()}</td>
+          <td class="currency">¥${product.price.toFixed(1)}</td>
+          <td class="currency tooltip" data-tip="售价不含运费、包装费">¥${product.total.toLocaleString()} <span style="color: var(--color-text-tertiary);">ⓘ</span></td>
+          <td class="percentage positive">${product.profitRate}%</td>
+          <td class="percentage">${product.share}%</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('totalProducts').textContent = data.products;
+    }
+
+    // 更新导出栏
+    function updateExportBar() {
+      const checkboxes = document.querySelectorAll('#mainTableBody .checkbox');
+      selectedApps = [];
+      checkboxes.forEach((cb, index) => {
+        if (cb.checked) {
+          const row = cb.closest('tr');
+          selectedApps.push(row.dataset.app);
+        }
+      });
+
+      const exportBar = document.getElementById('exportBar');
+      if (selectedApps.length > 0) {
+        exportBar.style.display = 'flex';
+        document.getElementById('selectedCount').textContent = selectedApps.length;
+
+        let totalProducts = 0;
+        selectedApps.forEach(app => {
+          if (appData[app]) {
+            totalProducts += appData[app].products;
+          }
+        });
+        document.getElementById('totalProducts').textContent = totalProducts;
+      } else {
+        exportBar.style.display = 'none';
+      }
+    }
+
+    // 全选/取消全选
+    function toggleSelectAll() {
+      const selectAllCheckbox = document.getElementById('selectAll');
+      const checkboxes = document.querySelectorAll('#mainTableBody .checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = selectAllCheckbox.checked;
+      });
+      updateExportBar();
+    }
+
+    // 显示Toast提示
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type;
+      toast.classList.add('show');
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // 导出功能
+    function handleExport() {
+      if (selectedApps.length === 0) {
+        showToast('请先选择要导出的应用', 'error');
+        return;
+      }
+
+      // 模拟大数据量检测
+      let totalProducts = 0;
+      selectedApps.forEach(app => {
+        if (appData[app]) {
+          totalProducts += appData[app].products;
+        }
+      });
+
+      // 模拟数据量过大（超过5000条）
+      if (totalProducts > 5000) {
+        showToast('数据过大，导出失败', 'error');
+        return;
+      }
+
+      // 模拟导出成功
+      showToast(`已成功导出 ${selectedApps.length} 个应用的数据，共 ${totalProducts} 条商品记录`, 'success');
+    }
+
+    // 查询功能
+    function handleSearch() {
+      const tenant = document.getElementById('tenantInput').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+
+      if (!tenant) {
+        showToast('请输入租户名称', 'error');
+        return;
+      }
+
+      if (!startDate || !endDate) {
+        showToast('请选择时间范围', 'error');
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        showToast('开始时间不能大于结束时间', 'error');
+        return;
+      }
+
+      showToast('查询成功，数据已刷新', 'success');
+    }
+
+    // 重置功能
+    function handleReset() {
+      document.getElementById('tenantInput').value = '';
+      document.getElementById('startDate').value = '2025-01-01';
+      document.getElementById('endDate').value = '2025-01-31';
+      showToast('已重置筛选条件', 'info');
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      updateExportBar();
+    });
+  </script>
+</body>
+</html>
