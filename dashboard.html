@@ -225,18 +225,6 @@
       position: relative;
     }
 
-    .donut-center {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      pointer-events: none;
-    }
-
-    .donut-center .sub { font-size: 12px; color: var(--text-secondary); }
-    .donut-center .main { font-size: 18px; font-weight: 600; color: var(--text-primary); }
-
     .chart-legend {
       flex: 1;
       display: flex;
@@ -452,10 +440,6 @@
         <div class="chart-donut-wrap">
           <div class="chart-donut-canvas">
             <canvas id="shareChart"></canvas>
-            <div class="donut-center">
-              <div class="sub">主机</div>
-              <div class="main">200台</div>
-            </div>
           </div>
           <div class="chart-legend" id="shareLegend"></div>
         </div>
@@ -521,11 +505,6 @@
       <div class="trend-header">
         <div class="card-title" style="margin-bottom:0">销售趋势</div>
         <div class="trend-filters">
-          <select class="filter-select" style="width:72px">
-            <option selected>年</option>
-            <option>月</option>
-            <option>周</option>
-          </select>
           <div class="chart-legend-inline">
             <span><i class="dot" style="background:#60a5fa"></i>销售额</span>
             <span><i class="dot" style="background:#a78bfa"></i>毛利额</span>
