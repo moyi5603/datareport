@@ -4,18 +4,19 @@
 
 ## 在线访问
 
-- 首页：<https://moyi5603.github.io/datareport/>
-- 报表：<https://moyi5603.github.io/datareport/data-report.html>
+- 数据概况（默认）：<https://moyi5603.github.io/datareport/dashboard.html>
+- 销售明细：<https://moyi5603.github.io/datareport/data-report.html>
 
 ## 本地预览
 
-在仓库根目录启动静态服务器后打开 `data-report.html`，例如：
+在仓库根目录启动静态服务器，例如：
 
 ```bash
 python3 -m http.server 8080
 ```
 
-浏览器访问 <http://localhost:8080/data-report.html>
+- 数据概况：<http://localhost:8080/dashboard.html>
+- 销售明细：<http://localhost:8080/data-report.html>
 
 ## GitHub Pages
 

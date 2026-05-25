@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据概况</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-page: #f0f2f5;
+      --bg-card: #ffffff;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --border: #e5e7eb;
+      --blue: #3b82f6;
+      --cyan: #22d3ee;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --pink: #ec4899;
+      --purple: #8b5cf6;
+      --radius: 8px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-page);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 200px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .sidebar-brand {
+      padding: 20px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-nav {
+      padding: 8px 0;
+      flex: 1;
+    }
+
+    .sidebar-nav a {
+      display: block;
+      padding: 11px 16px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar-nav a:hover {
+      background: #f3f4f6;
+      color: var(--text-primary);
+    }
+
+    .sidebar-nav a.active {
+      background: #eff6ff;
+      color: var(--blue);
+      font-weight: 500;
+      border-right: 2px solid var(--blue);
+    }
+
+    .main-content {
+      flex: 1;
+      overflow-x: auto;
+      padding: 16px 20px 24px;
+    }
+
+    .page-wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* 顶部筛选 */
+    .top-filter {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-item label {
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .filter-input,
+    .filter-select {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--bg-card);
+      outline: none;
+    }
+
+    .filter-input { width: 120px; }
+
+    .filter-select {
+      min-width: 100px;
+      cursor: pointer;
+    }
+
+    .date-range {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .date-sep { color: var(--text-muted); }
+
+    /* 卡片通用 */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+    }
+
+    /* 数据概况 KPI */
+    .overview-section {
+      margin-bottom: 16px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon svg { width: 24px; height: 24px; }
+
+    .kpi-icon.blue { background: #3b82f6; color: #fff; }
+    .kpi-icon.blue-outline { background: #eff6ff; color: #3b82f6; border: 2px solid #3b82f6; }
+    .kpi-icon.red-outline { background: #fff; color: #ef4444; border: 2px solid #ef4444; }
+    .kpi-icon.dark { background: #374151; color: #fff; }
+
+    .kpi-body { flex: 1; min-width: 0; }
+
+    .kpi-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    /* 中间两栏 */
+    .middle-row {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .chart-donut-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 280px;
+    }
+
+    .chart-donut-canvas {
+      flex: 1;
+      max-width: 220px;
+      position: relative;
+    }
+
+    .donut-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .donut-center .sub { font-size: 12px; color: var(--text-secondary); }
+    .donut-center .main { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+
+    .chart-legend {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+      padding-left: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* 排名表格 */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #fafafa;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f3f4f6;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    tbody tr:hover { background: #f9fafb; }
+
+    .app-link { color: var(--blue); }
+
+    /* 销售趋势 */
+    .trend-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .trend-filters {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .trend-filters label { color: var(--text-secondary); }
+
+    .chart-legend-inline {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .chart-legend-inline span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chart-legend-inline .dot {
+      width: 10px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    .trend-chart-wrap {
+      height: 320px;
+      position: relative;
+    }
+
+    @media (max-width: 1100px) {
+      .middle-row { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar {
+        width: 100%;
+        min-height: auto;
+        flex-direction: row;
+        align-items: center;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar-brand {
+        border-bottom: none;
+        padding: 12px 16px;
+        margin-bottom: 0;
+      }
+      .sidebar-nav {
+        display: flex;
+        padding: 0 8px 0 0;
+      }
+      .sidebar-nav a {
+        padding: 12px 14px;
+        border-right: none;
+      }
+      .sidebar-nav a.active { border-right: none; border-bottom: 2px solid var(--blue); }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-brand">数据报表</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="active">数据概况</a>
+      <a href="data-report.html">销售明细</a>
+    </nav>
+  </aside>
+  <main class="main-content">
+  <div class="page-wrap">
+    <!-- 顶部筛选 -->
+    <div class="top-filter">
+      <div class="filter-item">
+        <label>时间:</label>
+        <div class="date-range">
+          <input type="date" class="filter-input" value="2026-01-01">
+          <span class="date-sep">—</span>
+          <input type="date" class="filter-input" value="2026-01-01">
+        </div>
+      </div>
+      <div class="filter-item">
+        <label>租户:</label>
+        <select class="filter-select">
+          <option selected>全部</option>
+          <option>租户A</option>
+          <option>租户B</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 数据概况 -->
+    <section class="overview-section">
+      <div class="card-title" style="margin-bottom:12px">数据概况</div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 14h2a2 2 0 002-2v-1a3 3 0 00-6 0v1a2 2 0 002 2z"/><path d="M8 11V8a4 4 0 118 0v3M5 11h14"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">订单量</div>
+            <div class="kpi-value">54,322</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon blue-outline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">销售额</div>
+            <div class="kpi-value">124,345</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon red-outline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">毛利率</div>
+            <div class="kpi-value">68,123</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon dark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" stroke-width="1.5"/></svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">用户数</div>
+            <div class="kpi-value">124,345</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 应用占比 + 应用排名 -->
+    <div class="middle-row">
+      <div class="card">
+        <div class="card-title">应用占比</div>
+        <div class="chart-donut-wrap">
+          <div class="chart-donut-canvas">
+            <canvas id="shareChart"></canvas>
+            <div class="donut-center">
+              <div class="sub">主机</div>
+              <div class="main">200台</div>
+            </div>
+          </div>
+          <div class="chart-legend" id="shareLegend"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">应用排名</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>应用</th>
+                <th>销量</th>
+                <th>销售额</th>
+                <th>同比</th>
+                <th>环比</th>
+                <th>占比</th>
+                <th>成本</th>
+                <th>毛利率</th>
+                <th>客单价</th>
+                <th>日均销售</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="app-link">盒马</td>
+                <td>30%</td><td>30%</td><td>30%</td><td>21%</td><td>10%</td>
+                <td>5%</td><td>30%</td><td>21%</td><td>10%</td>
+              </tr>
+              <tr>
+                <td class="app-link">自营</td>
+                <td>30%</td><td>30%</td><td>30%</td><td>21%</td><td>10%</td>
+                <td>5%</td><td>30%</td><td>21%</td><td>10%</td>
+              </tr>
+              <tr>
+                <td class="app-link">美团</td>
+                <td>30%</td><td>30%</td><td>30%</td><td>21%</td><td>10%</td>
+                <td>5%</td><td>30%</td><td>21%</td><td>10%</td>
+              </tr>
+              <tr>
+                <td class="app-link">京东</td>
+                <td>30%</td><td>30%</td><td>30%</td><td>21%</td><td>10%</td>
+                <td>5%</td><td>30%</td><td>21%</td><td>10%</td>
+              </tr>
+              <tr>
+                <td class="app-link">携程</td>
+                <td>30%</td><td>30%</td><td>30%</td><td>21%</td><td>10%</td>
+                <td>5%</td><td>30%</td><td>21%</td><td>10%</td>
+              </tr>
+              <tr>
+                <td class="app-link">天猫</td>
+                <td>30%</td><td>30%</td><td>30%</td><td>21%</td><td>10%</td>
+                <td>5%</td><td>30%</td><td>21%</td><td>10%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 销售趋势 -->
+    <div class="card">
+      <div class="trend-header">
+        <div class="card-title" style="margin-bottom:0">销售趋势</div>
+        <div class="trend-filters">
+          <select class="filter-select" style="width:72px">
+            <option selected>年</option>
+            <option>月</option>
+            <option>周</option>
+          </select>
+          <div class="date-range">
+            <input type="date" class="filter-input" value="2026-01-01">
+            <span class="date-sep">—</span>
+            <input type="date" class="filter-input" value="2026-01-01">
+          </div>
+          <div class="filter-item">
+            <label>租户:</label>
+            <select class="filter-select">
+              <option selected>租户A</option>
+              <option>租户B</option>
+              <option>全部</option>
+            </select>
+          </div>
+          <div class="chart-legend-inline">
+            <span><i class="dot" style="background:#60a5fa"></i>销售额</span>
+            <span><i class="dot" style="background:#a78bfa"></i>毛利额</span>
+            <span><i class="dot" style="background:#4ade80"></i>客户</span>
+          </div>
+        </div>
+      </div>
+      <div class="trend-chart-wrap">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <script>
+    const shareData = [
+      { name: '盒马', value: 40, color: '#3b82f6' },
+      { name: '美团', value: 21, color: '#22d3ee' },
+      { name: '自营', value: 18, color: '#22c55e' },
+      { name: '京东', value: 13, color: '#eab308' },
+      { name: '天猫', value: 9, color: '#ec4899' }
+    ];
+
+    const legendEl = document.getElementById('shareLegend');
+    shareData.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'legend-item';
+      row.innerHTML = `<span class="legend-dot" style="background:${item.color}"></span><span>${item.name}: ${item.value}%</span>`;
+      legendEl.appendChild(row);
+    });
+
+    new Chart(document.getElementById('shareChart'), {
+      type: 'doughnut',
+      data: {
+        labels: shareData.map(d => d.name),
+        datasets: [{
+          data: shareData.map(d => d.value),
+          backgroundColor: shareData.map(d => d.color),
+          borderWidth: 2,
+          borderColor: '#fff',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.label}: ${ctx.parsed}%`
+            }
+          }
+        }
+      },
+      plugins: [{
+        id: 'segmentLabels',
+        afterDraw(chart) {
+          const { ctx } = chart;
+          const meta = chart.getDatasetMeta(0);
+          meta.data.forEach((arc, i) => {
+            const mid = (arc.startAngle + arc.endAngle) / 2;
+            const r = (arc.innerRadius + arc.outerRadius) / 2;
+            const x = arc.x + Math.cos(mid) * r;
+            const y = arc.y + Math.sin(mid) * r;
+            ctx.save();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const pct = shareData[i].value + '%';
+            ctx.fillText(pct, x, y);
+            ctx.restore();
+          });
+        }
+      }]
+    });
+
+    const weeks = Array.from({ length: 12 }, (_, i) => `第${i + 1}周`);
+    const salesData = [12, 18, 22, 28, 35, 42, 38, 32, 28, 24, 20, 16];
+    const profitData = [8, 12, 16, 20, 28, 45, 40, 35, 30, 25, 18, 14];
+    const customerData = [10, 14, 18, 22, 30, 45, 42, 36, 32, 28, 22, 18];
+
+    new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: weeks,
+        datasets: [
+          {
+            label: '销售额',
+            data: salesData,
+            borderColor: '#60a5fa',
+            backgroundColor: 'rgba(96, 165, 250, 0.08)',
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            borderWidth: 2
+          },
+          {
+            label: '毛利额',
+            data: profitData,
+            borderColor: '#a78bfa',
+            backgroundColor: 'transparent',
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            borderWidth: 2
+          },
+          {
+            label: '客户',
+            data: customerData,
+            borderColor: '#4ade80',
+            backgroundColor: 'transparent',
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(55, 65, 81, 0.95)',
+            titleFont: { size: 13 },
+            bodyFont: { size: 12 },
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              title: items => items[0].label,
+              label: () => null,
+              afterBody: items => {
+                const i = items[0].dataIndex;
+                return [
+                  `毛利额: ${profitData[i]}`,
+                  `用户量: ${customerData[i]}`,
+                  `交易额: ${salesData[i]}`
+                ];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#9ca3af', font: { size: 11 } }
+          },
+          y: {
+            min: 0,
+            max: 60,
+            ticks: {
+              stepSize: 15,
+              color: '#9ca3af',
+              font: { size: 11 }
+            },
+            grid: { color: '#f3f4f6' }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
